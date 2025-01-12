@@ -1,9 +1,9 @@
 import express from "express";
 import { getAllRecipes } from "../controllers/recipesController";
 
-const router = express.Router();
+const recipesRoutes = express.Router();
 
 // Recipes endpoints
-router.get("/", getAllRecipes);
+recipesRoutes.get("/", getAllRecipes);
 
-export default router;
+export default recipesRoutes;

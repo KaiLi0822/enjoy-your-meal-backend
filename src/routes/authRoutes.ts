@@ -1,12 +1,12 @@
 import express from "express";
 import { loginUser, refreshAccessToken } from "../controllers/authController";
 
-const router = express.Router();
+const authRoutes = express.Router();
 
 // Route for user login
-router.post("/login", loginUser);
+authRoutes.post("/login", loginUser);
 
 // Route to refresh access tokens
-router.post("/refresh", refreshAccessToken);
+authRoutes.post("/refresh", refreshAccessToken);
 
-export default router;
+export default authRoutes;
