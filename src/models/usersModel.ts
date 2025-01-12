@@ -3,18 +3,6 @@ import { User } from "../types/users";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { config } from "../utils/config";
 
-// Function to fetch a user by ID
-export const getUserById = async (userId: string): Promise<User | null> => {
-  const params = {
-    TableName: config.usersTable,
-    Key: { userId },
-  };
-
-  const command = new GetCommand(params);
-  const result = await dynamoDB.send(command);
-  return result.Item as User || null;
-};
-
 // Function to add a user
 export const addUserToDB = async (user: User): Promise<void> => {
   const params = {

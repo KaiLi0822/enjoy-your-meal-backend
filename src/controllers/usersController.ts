@@ -11,7 +11,6 @@ import { logger } from "../utils/logger";
  */
 export const addUser = async (req: Request, res: Response) => {
   try {
-    logger.info("addUser")
     const { name, email, password, rememberMe } = req.body;
 
     // Hash the password
@@ -19,7 +18,6 @@ export const addUser = async (req: Request, res: Response) => {
 
     // Create a new user object
     const newUser: User = {
-      userId: uuidv4(),
       name,
       email,
       password: hashedPassword,
@@ -30,14 +28,14 @@ export const addUser = async (req: Request, res: Response) => {
 
     // Generate an access token for the user
     const accessToken = jwt.sign(
-      { userId: newUser.userId, email: newUser.email, name: newUser.name },
+      { email: newUser.email, name: newUser.name },
       config.jwtSecret,
       { expiresIn: config.accessTokenExpiresIn } // Short-lived token
     );
 
     // Generate a refresh token for the user
     const refreshToken = jwt.sign(
-      { userId: newUser.userId },
+      { userId: newUser.email },
       config.jwtSecret,
       { expiresIn: rememberMe ? config.refreshTokenExpiresInLong : config.refreshTokenExpiresInShort } // Long-lived token
     );
@@ -54,7 +52,6 @@ export const addUser = async (req: Request, res: Response) => {
     res.status(201).json({
       message: "User added successfully",
       user: {
-        userId: newUser.userId,
         name: newUser.name,
         email: newUser.email,
       },

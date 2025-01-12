@@ -1,7 +1,8 @@
 export const config = {
-    awsRegion: process.env.AWS_REGION || "us-east-1",
+    awsRegion: process.env.AWS_REGION || "ca-central-1",
     recipesTable: process.env.RECIPES_TABLE || "Recipes",
     usersTable: process.env.USERS_TABLE || "Users",
+    menusTable: process.env.MENUS_TABLE || "Menus",
     jwtSecret: process.env.JWT_SECRET || "your-secret-key",
     accessTokenExpiresIn: "1h", // Short-lived access token
     refreshTokenExpiresInLong: "3d", // Refresh token for "Remember Me"

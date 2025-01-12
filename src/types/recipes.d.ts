@@ -4,7 +4,6 @@ export interface Recipe {
     description: string;
     ingredients: string[];
     methods: string[];
-    createdDate: string;
     createdUser: string;
     cover: string;
   }

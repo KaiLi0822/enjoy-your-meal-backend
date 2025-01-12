@@ -5,7 +5,7 @@ import cors from "cors";
 const app = express();
 
 // Allow requests only from the frontend
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
 // Middleware to parse JSON
 app.use(express.json());

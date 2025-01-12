@@ -1,4 +1,4 @@
-import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { ScanCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoDB from "../utils/dynamoClient";
 import { Recipe } from "../types/recipes";
 import { config } from "../utils/config"; // Import the config object
