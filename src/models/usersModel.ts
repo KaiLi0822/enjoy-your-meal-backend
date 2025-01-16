@@ -6,7 +6,7 @@ import { config } from "../utils/config";
 // Function to add a user
 export const addUserToDB = async (user: User): Promise<void> => {
   const params = {
-    TableName: config.usersTable,
+    TableName: config.table,
     Item: user,
   };
 
@@ -23,9 +23,12 @@ export const addUserToDB = async (user: User): Promise<void> => {
  */
 export const getUserByEmail = async (email: string): Promise<User> => {
     const params = {
-      TableName: config.usersTable, // Table name from config
-      Key: { email }, // DynamoDB uses `email` as the primary key
-    };
+        TableName: config.table, // Table name from config
+        Key: {
+          PK: `user#${email}`,
+          SK: "profile",
+        },
+      };
   
     try {
       const result = await dynamoDB.send(new GetCommand(params));

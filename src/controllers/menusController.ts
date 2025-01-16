@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import dynamoDB from '../utils/dynamoClient';
-import { getMenusByUser } from '../models/menusModel';
+import { deleteMenuAndRelatedItems, getMenusByUser } from '../models/menusModel';
 
 // Fetch menus for the user
 export const getMenus = async (req: Request, res: Response) => {
@@ -45,19 +45,20 @@ export const getMenus = async (req: Request, res: Response) => {
 //   }
 // };
 
-// // Delete a menu
-// export const deleteMenu = async (req: Request, res: Response): Promise<void> => {
-//   const { menuId } = req.params;
-
-//   const params = {
-//     TableName: process.env.MENUS_TABLE!,
-//     Key: { menuId },
-//   };
-
-//   try {
-//     await dynamoDB.delete(params).promise();
-//     res.status(200).json({ message: 'Menu deleted successfully' });
-//   } catch (error) {
-//     res.status(500).json({ message: 'Failed to delete menu' });
-//   }
-// };
+// Delete a menu
+export const deleteMenu = async (req: Request, res: Response) => {
+    const { menuId } = req.params;
+  
+    try {
+      const isDeleted = await deleteMenuAndRelatedItems(menuId);
+  
+      if (isDeleted) {
+        res.status(200).json({ message: "Menu deleted successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to delete menu" });
+      }
+    } catch (error) {
+      console.error("Error deleting menu:", error);
+      res.status(500).json({ message: "Failed to delete menu" });
+    }
+  };

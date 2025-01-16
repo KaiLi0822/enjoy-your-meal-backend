@@ -1,10 +1,11 @@
+import { Ingredient } from "./ingredient";
 export interface Recipe {
-    recipeId: string;
-    title: string;
+    PK: string;
+    SK: string;
+    name: string;
     description: string;
-    ingredients: string[];
+    ingredients: Ingredient[];
     methods: string[];
-    createdUser: string;
     cover: string;
   }
   

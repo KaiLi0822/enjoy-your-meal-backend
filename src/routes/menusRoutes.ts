@@ -1,5 +1,5 @@
 import express from "express";
-import { getMenus } from "../controllers/menusController";
+import { getMenus, deleteMenu } from "../controllers/menusController";
 import { authenticate } from "../middlewares/auth";
 
 const menusRoutes = express.Router();
@@ -7,7 +7,7 @@ const menusRoutes = express.Router();
 // Route for user login
 menusRoutes.get("/", authenticate, getMenus);
 // router.post("/", authenticate, addMenu);
-// router.delete("/:menuId", authenticate, deleteMenu);
+menusRoutes.delete("/:menuId", authenticate, deleteMenu);
 
 
 

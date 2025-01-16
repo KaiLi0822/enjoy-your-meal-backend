@@ -4,6 +4,7 @@ import { config } from "../utils/config";
 import { logger } from "../utils/logger";
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+
   const token = req.headers.authorization?.split(" ")[1]; // Extract Bearer token
   if (!token) {
     res.status(401).json({ message: "Unauthorized access" });
@@ -13,11 +14,11 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
   try {
     // Verify the token
     const decoded = jwt.verify(token!, config.jwtSecret) as JwtPayload;
+
     // Ensure the decoded token contains the expected fields
-    if (decoded && "email" in decoded && "name" in decoded) {
+    if (decoded && "email" in decoded) {
       req.user = {
         email: decoded.email as string,
-        name: decoded.name as string,
       }; // Populate user object
       next();
       return;

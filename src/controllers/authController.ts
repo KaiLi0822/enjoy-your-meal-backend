@@ -3,6 +3,23 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { config } from "../utils/config";
 import { getUserByEmail } from "../models/usersModel";
+import { logger } from "../utils/logger";
+
+export const logoutUser = (req: Request, res: Response) => {
+    try {
+      // Clear the refresh token cookie
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+      });
+  
+      res.status(200).json({ message: "Logout successful" });
+    } catch (error) {
+      console.error("Error during logout:", error);
+      res.status(500).json({ message: "Failed to log out" });
+    }
+  };
 
 // Login user
 export const loginUser = async (req: Request, res: Response) => {
@@ -13,18 +30,19 @@ export const loginUser = async (req: Request, res: Response) => {
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       res.status(401).json({ message: "Invalid email or password" });
+      return;
     }
 
     // Generate an access token for the user
     const accessToken = jwt.sign(
-      { email: user.email, name: user.name },
+      { email: email },
       config.jwtSecret,
       { expiresIn: config.accessTokenExpiresIn } // Short-lived token
     );
 
     // Generate a refresh token for the user
     const refreshToken = jwt.sign(
-      { email: user.email, name: user.name },
+      { email: email },
       config.jwtSecret,
       {
         expiresIn: rememberMe
@@ -36,20 +54,16 @@ export const loginUser = async (req: Request, res: Response) => {
     // Set the refresh token in an HTTP-only cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       sameSite: "strict",
       maxAge: rememberMe
-        ? parseInt(config.refreshTokenExpiresInLong) * 1000
-        : parseInt(config.refreshTokenExpiresInShort) * 1000, // 7 days in milliseconds
+        ? config.refreshTokenExpiresInLong * 1000
+        : undefined,
     });
 
     // Return success response with user details and access token
     res.status(200).json({
       message: "Login successful",
-      user: {
-        name: user.name,
-        email: user.email,
-      },
       accessToken,
     });
   } catch (error) {
@@ -60,7 +74,9 @@ export const loginUser = async (req: Request, res: Response) => {
 
 // Refresh access token
 export const refreshAccessToken = (req: Request, res: Response) => {
+    logger.info("refreshAccessToken")
   const refreshToken = req.cookies.refreshToken;
+  console.log(req.cookies)
 
   if (!refreshToken) {
     res.status(401).json({ message: "Refresh token is required" });
@@ -70,10 +86,9 @@ export const refreshAccessToken = (req: Request, res: Response) => {
   try {
     const decoded = jwt.verify(refreshToken, config.jwtSecret) as {
       email: string;
-      name: string;
     };
     const newAccessToken = jwt.sign(
-      { email: decoded.email, name: decoded.name },
+      { email: decoded.email },
       config.jwtSecret,
       {
         expiresIn: config.accessTokenExpiresIn,

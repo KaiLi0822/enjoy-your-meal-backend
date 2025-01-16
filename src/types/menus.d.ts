@@ -1,8 +1,6 @@
 export interface Menu {
-    menuId: string;
-    userEmail: string;
+    PK: string;
+    SK: string;
     name: string;
-    description: string;
-    recipes: string[];
   }
   
