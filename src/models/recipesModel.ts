@@ -52,8 +52,6 @@ export const getRecipesByUserMenu = async (
     userEmail: string,
     menuId: string
   ): Promise<Recipe[]> => {
-    console.log("getRecipesByUserMenu")
-    // Remove the menu%23 prefix
     const params = {
       TableName: config.table,
       KeyConditionExpression: "PK = :pk",

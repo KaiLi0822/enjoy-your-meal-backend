@@ -1,5 +1,5 @@
 import express from "express";
-import { addUser, getRecipes, deleteMenu, getMenus } from "../controllers/usersController";
+import { addUser, getRecipes, deleteMenu, getMenus, addMenu } from "../controllers/usersController";
 import { validateUser } from "../middlewares/validate";
 import { authenticate } from "../middlewares/auth";
 import { getMenuRecipes } from "../controllers/recipesController";
@@ -15,6 +15,8 @@ usersRoutes.get("/:menuId/recipes", authenticate, getMenuRecipes);
 // Get all menus
 usersRoutes.get("/menus", authenticate, getMenus);
 // Delete a menu
-usersRoutes.delete("/menus/:menuId", authenticate, deleteMenu);
+usersRoutes.delete("/menus/:menuName", authenticate, deleteMenu);
+// Delete a menu
+usersRoutes.post("/menus/:menuName", authenticate, addMenu);
 
 export default usersRoutes;
