@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { config } from "../utils/config";
-import { logger } from "../utils/logger";
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
 

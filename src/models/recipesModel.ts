@@ -18,10 +18,9 @@ export const fetchAllRecipes = async (): Promise<Recipe[]> => {
     };
 
     const command = new QueryCommand(params);
-    const data = await dynamoDB.send(command);
-    console.log(data)
+    const result = await dynamoDB.send(command);
     // Convert raw DynamoDB items to Recipe[] type
-    return (data.Items as Recipe[]) || [];
+    return (result.Items as Recipe[]) || [];
   } catch (error) {
     console.error("Error fetching recipes from DynamoDB:", error);
     throw new Error("Failed to fetch recipes");
@@ -47,3 +46,25 @@ export const getRecipesByUser = async (
   // Map the DynamoDB response to the `Recipe` type
   return result.Items as Recipe[];
 };
+
+// fetch recipes for a user's specific menu.
+export const getRecipesByUserMenu = async (
+    userEmail: string,
+    menuId: string
+  ): Promise<Recipe[]> => {
+    console.log("getRecipesByUserMenu")
+    // Remove the menu%23 prefix
+    const params = {
+      TableName: config.table,
+      KeyConditionExpression: "PK = :pk",
+      ExpressionAttributeValues: {
+        ":pk": `user#${userEmail}1${menuId}`, // Partition key
+      },
+    };
+
+    const command = new QueryCommand(params);
+    const result = await dynamoDB.send(command);
+  
+    // Map the DynamoDB response to the `Recipe` type
+    return result.Items as Recipe[];
+  };

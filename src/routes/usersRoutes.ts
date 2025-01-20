@@ -1,12 +1,20 @@
 import express from "express";
-import { addUser, getRecipes } from "../controllers/usersController";
+import { addUser, getRecipes, deleteMenu, getMenus } from "../controllers/usersController";
 import { validateUser } from "../middlewares/validate";
 import { authenticate } from "../middlewares/auth";
+import { getMenuRecipes } from "../controllers/recipesController";
 
 const usersRoutes = express.Router();
 
 // Add a user with validation middleware
 usersRoutes.post("/", validateUser, addUser);
+// Get all recipes
 usersRoutes.get("/recipes", authenticate, getRecipes);
+// Get all recipes that belong to a menu
+usersRoutes.get("/:menuId/recipes", authenticate, getMenuRecipes);
+// Get all menus
+usersRoutes.get("/menus", authenticate, getMenus);
+// Delete a menu
+usersRoutes.delete("/menus/:menuId", authenticate, deleteMenu);
 
 export default usersRoutes;

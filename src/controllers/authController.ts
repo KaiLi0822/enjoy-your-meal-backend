@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { config } from "../utils/config";
 import { getUserByEmail } from "../models/usersModel";
-import { logger } from "../utils/logger";
 
 export const logoutUser = (req: Request, res: Response) => {
     try {
@@ -64,7 +63,7 @@ export const loginUser = async (req: Request, res: Response) => {
     // Return success response with user details and access token
     res.status(200).json({
       message: "Login successful",
-      accessToken,
+      data: accessToken,
     });
   } catch (error) {
     console.error("Error during login:", error);
@@ -74,10 +73,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
 // Refresh access token
 export const refreshAccessToken = (req: Request, res: Response) => {
-    logger.info("refreshAccessToken")
   const refreshToken = req.cookies.refreshToken;
-  console.log(req.cookies)
-
   if (!refreshToken) {
     res.status(401).json({ message: "Refresh token is required" });
     return;
@@ -95,7 +91,7 @@ export const refreshAccessToken = (req: Request, res: Response) => {
       }
     );
 
-    res.status(200).json({ accessToken: newAccessToken });
+    res.status(200).json({ message: "Refresh Successfully", data: newAccessToken });
   } catch (error) {
     console.error("Invalid refresh token:", error);
     res.status(401).json({ message: "Invalid or expired refresh token" });
