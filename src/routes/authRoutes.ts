@@ -1,5 +1,6 @@
 import express from "express";
-import { loginUser, refreshAccessToken, logoutUser } from "../controllers/authController";
+import { loginUser, refreshAccessToken, logoutUser, getStatus } from "../controllers/authController";
+import { authenticate } from "../middlewares/auth";
 
 const authRoutes = express.Router();
 
@@ -9,7 +10,8 @@ authRoutes.post("/login", loginUser);
 // Route to refresh access tokens
 authRoutes.post("/refresh", refreshAccessToken);
 
+authRoutes.get("/status", authenticate, getStatus);
 
-authRoutes.post("/logout", logoutUser);
+authRoutes.post("/logout",  logoutUser);
 
 export default authRoutes;

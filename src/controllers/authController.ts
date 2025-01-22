@@ -97,3 +97,12 @@ export const refreshAccessToken = (req: Request, res: Response) => {
     res.status(401).json({ message: "Invalid or expired refresh token" });
   }
 };
+
+export const getStatus = async (req: Request, res: Response) => {
+  const userEmail = req.user?.email;
+  if (!userEmail) {
+    res.status(401).json({ message: "Unauthorized: User not authenticated" });
+    return;
+  }
+  res.status(200).json({ message: "User Authenticated" });
+};
