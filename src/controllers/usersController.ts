@@ -7,12 +7,15 @@ import {
   deleteMenuAndRelatedItems,
   getMenusByUser,
   getUserByEmail,
+  addRecipeToDB
 } from "../models/usersModel";
 import { User } from "../types/users";
 import jwt from "jsonwebtoken";
 import { config } from "../utils/config";
 import { getRecipesByUser } from "../models/recipesModel";
 import { Menu } from "../types/menus";
+import { Recipe } from "../types/recipes";
+import { Ingredient } from "../types/ingredient";
 /**
  * Controller to add a new user.
  */
@@ -136,7 +139,7 @@ export const addMenu = async (req: Request, res: Response): Promise<void> => {
     // Save the user to the database
     await addMenuToDB(newMenu);
 
-    res.status(201).json({ message: "Menu added successfully", menu: newMenu });
+    res.status(201).json({ message: "Menu added successfully" });
   } catch (error) {
     res.status(500).json({ message: "Failed to add menu" });
   }
@@ -162,5 +165,68 @@ export const deleteMenu = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error deleting menu:", error);
     res.status(500).json({ message: "Failed to delete menu" });
+  }
+};
+
+
+export const addRecipe = async (req: Request, res: Response): Promise<void> => {
+  console.log("addRecipe")
+  try {
+    const userEmail = req.user?.email;
+    if (!userEmail) {
+      res.status(401).json({ message: "Unauthorized: User not authenticated" });
+      return;
+    }
+
+    const { name, description, ingredients, methods, cover } = req.body;
+
+    // Validate input
+    if (!name || !description || !Array.isArray(ingredients) || !Array.isArray(methods) || !cover) {
+      res.status(400).json({ message: "Invalid input. Please provide all required fields." });
+      return;
+    }
+
+    // Map ingredients to the correct type
+    const parsedIngredients: Ingredient[] = ingredients.map((item: any) => {
+      if (!item.name || !item.quantity) {
+        throw new Error("Invalid ingredient format");
+      }
+      return {
+        name: item.name,
+        quantity: item.quantity,
+      };
+    });
+
+    // Validate methods
+    const parsedMethods: string[] = methods.map((step: any) => {
+      if (typeof step !== "string") {
+        throw new Error("Invalid method format");
+      }
+      return step;
+    });
+
+    // Create a new recipe object
+    const newRecipe: Recipe = {
+      PK: `user#${userEmail}`,
+      SK: `recipe#${name}`,
+      GSI1PK: "recipe",
+      name: name,
+      description: description,
+      ingredients: parsedIngredients,
+      methods: parsedMethods,
+      cover: cover,
+    };
+
+    // Save the recipe to the database
+    await addRecipeToDB(newRecipe);
+
+    res.status(201).json({ message: "Recipe added successfully" });
+  } catch (error) {
+    console.error("Error adding recipe:", error);
+    if (error instanceof Error && error.message.includes("Invalid")) {
+      res.status(400).json({ message: error.message });
+    } else {
+      res.status(500).json({ message: "Failed to add recipe" });
+    }
   }
 };

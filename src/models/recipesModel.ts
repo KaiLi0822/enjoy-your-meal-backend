@@ -2,6 +2,29 @@ import { ScanCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoDB from "../utils/dynamoClient";
 import { Recipe } from "../types/recipes";
 import { config } from "../utils/config"; // Import the config object
+import { generateS3ReadableUrl } from "./s3Model";
+
+/**
+ * Replace the `cover` property with a readable S3 URL for all recipes.
+ */
+const enrichRecipesWithS3Urls = async (recipes: Recipe[]): Promise<Recipe[]> => {
+  return await Promise.all(
+    recipes.map(async (recipe) => {
+      if (recipe.cover) {
+        try {
+          recipe.cover = await generateS3ReadableUrl(recipe.cover);
+        } catch (error) {
+          console.error(
+            `Failed to generate S3 URL for recipe ${recipe.name}:`,
+            error
+          );
+          throw error;
+        }
+      }
+      return recipe;
+    })
+  );
+};
 
 /**
  * Fetch all recipes from the DynamoDB table.
@@ -20,7 +43,8 @@ export const fetchAllRecipes = async (): Promise<Recipe[]> => {
     const command = new QueryCommand(params);
     const result = await dynamoDB.send(command);
     // Convert raw DynamoDB items to Recipe[] type
-    return (result.Items as Recipe[]) || [];
+    const recipes = (result.Items as Recipe[]) || [];
+    return await enrichRecipesWithS3Urls(recipes);
   } catch (error) {
     console.error("Error fetching recipes from DynamoDB:", error);
     throw new Error("Failed to fetch recipes");
@@ -44,7 +68,8 @@ export const getRecipesByUser = async (
   const result = await dynamoDB.send(command);
 
   // Map the DynamoDB response to the `Recipe` type
-  return result.Items as Recipe[];
+  const recipes = (result.Items as Recipe[]) || [];
+  return await enrichRecipesWithS3Urls(recipes);
 };
 
 // fetch recipes for a user's specific menu.
@@ -64,5 +89,6 @@ export const getRecipesByUserMenu = async (
     const result = await dynamoDB.send(command);
   
     // Map the DynamoDB response to the `Recipe` type
-    return result.Items as Recipe[];
+    const recipes = (result.Items as Recipe[]) || [];
+    return await enrichRecipesWithS3Urls(recipes);
   };

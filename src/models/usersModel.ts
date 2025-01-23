@@ -9,6 +9,7 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { config } from "../utils/config";
 import { Menu } from "../types/menus";
+import { Recipe } from "../types/recipes";
 
 // Function to add a user
 export const addUserToDB = async (user: User): Promise<void> => {
@@ -165,6 +166,16 @@ export const addMenuToDB = async (menu: Menu): Promise<void> => {
   const params = {
     TableName: config.table,
     Item: menu,
+  };
+
+  const command = new PutCommand(params);
+  await dynamoDB.send(command);
+};
+
+export const addRecipeToDB = async (recipe: Recipe): Promise<void> => {
+  const params = {
+    TableName: config.table,
+    Item: recipe,
   };
 
   const command = new PutCommand(params);

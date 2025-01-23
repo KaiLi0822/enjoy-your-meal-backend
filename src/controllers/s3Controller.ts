@@ -4,6 +4,7 @@ import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { config } from "../utils/config";
 import { v4 as uuidv4 } from "uuid";
+import { generateS3ReadableUrl, uploadFileToS3 } from "../models/s3Model";
 
 export const uploadFile = async (
   req: Request,
@@ -18,18 +19,11 @@ export const uploadFile = async (
     }
 
     // Generate a unique file name by appending a UUID
-    const uniqueFileName = `${uuidv4()}.${file.originalname}`;
-
-    const params = {
-      Bucket: config.bucket,
-      Key: uniqueFileName,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-    };
-
-    // Generate the signed URL for uploading
-    const command = new PutObjectCommand(params);
-    await s3Client.send(command);
+    const uniqueFileName = await uploadFileToS3(
+      file.buffer,
+      file.originalname,
+      file.mimetype
+    );
 
     // Respond with the unique file name
     res.status(200).json({ 
@@ -38,5 +32,34 @@ export const uploadFile = async (
   } catch (error) {
     console.error("Error uploading to S3:", error);
     res.status(500).json({ error: "Failed to upload file" });
+  }
+};
+
+
+/**
+ * Controller to get a signed URL for downloading a file.
+ */
+export const getSignedUrlForFile = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { key } = req.params;
+    if (!key) {
+      res.status(400).json({ error: "No key provided" });
+      return;
+    }
+
+    // Call the model function to generate a signed URL
+    const signedUrl = await generateS3ReadableUrl(key);
+
+    // Respond with the signed URL
+    res.status(200).json({
+      message: "Signed URL generated successfully",
+      url: signedUrl,
+    });
+  } catch (error) {
+    console.error("Error in getSignedUrlForFile controller:", error);
+    res.status(500).json({ error: "Failed to generate signed URL" });
   }
 };
