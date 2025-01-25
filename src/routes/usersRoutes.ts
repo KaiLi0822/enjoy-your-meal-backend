@@ -1,8 +1,7 @@
 import express from "express";
-import { addUser, getRecipes, deleteMenu, getMenus, addMenu, addRecipe } from "../controllers/usersController";
+import { addUser, getRecipes, deleteMenu, getMenus, addMenu, addRecipe, getRecipeMenus, getMenuRecipes, deleteRecipeMenu, addRecipeMenu } from "../controllers/usersController";
 import { validateUser } from "../middlewares/validate";
 import { authenticate } from "../middlewares/auth";
-import { getMenuRecipes } from "../controllers/recipesController";
 
 const usersRoutes = express.Router();
 
@@ -10,6 +9,8 @@ const usersRoutes = express.Router();
 usersRoutes.post("/", validateUser, addUser);
 // Get all recipes
 usersRoutes.get("/recipes", authenticate, getRecipes);
+// Get all menus including the recipe
+usersRoutes.get("/recipeMenus", authenticate, getRecipeMenus);
 // Get all recipes that belong to a menu
 usersRoutes.get("/:menuId/recipes", authenticate, getMenuRecipes);
 // Get all menus
@@ -20,5 +21,9 @@ usersRoutes.delete("/menus/:menuName", authenticate, deleteMenu);
 usersRoutes.post("/menus/:menuName", authenticate, addMenu);
 // Add a recipe with validation middleware
 usersRoutes.post("/recipe", authenticate, addRecipe);
+// Delete a recipe from a menu
+usersRoutes.delete("/menus/:menuName/recipe/:recipeId", authenticate, deleteRecipeMenu);
+// Add a recipe into a menu
+usersRoutes.post("/menus/:menuName/recipe/:recipeId", authenticate, addRecipeMenu);
 
 export default usersRoutes;

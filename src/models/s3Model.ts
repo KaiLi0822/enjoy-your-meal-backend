@@ -3,6 +3,29 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { v4 as uuidv4 } from "uuid";
 import s3Client from "../utils/s3Client";
 import { config } from "../utils/config";
+import { Recipe } from "../types/recipes";
+
+/**
+ * Replace the `cover` property with a readable S3 URL for all recipes.
+ */
+export const enrichRecipesWithS3Urls = async (recipes: Recipe[]): Promise<Recipe[]> => {
+  return await Promise.all(
+    recipes.map(async (recipe) => {
+      if (recipe.cover) {
+        try {
+          recipe.cover = await generateS3ReadableUrl(recipe.cover);
+        } catch (error) {
+          console.error(
+            `Failed to generate S3 URL for recipe ${recipe.name}:`,
+            error
+          );
+          throw error;
+        }
+      }
+      return recipe;
+    })
+  );
+};
 
 /**
  * Generate a readable S3 URL for a given key.

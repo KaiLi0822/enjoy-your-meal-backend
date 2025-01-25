@@ -2,18 +2,20 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import {
-  addMenuToDB,
-  addUserToDB,
+  addToDB,
   deleteMenuAndRelatedItems,
   getMenusByUser,
   getUserByEmail,
-  addRecipeToDB
+  getRecipeMenusByUser,
+  getRecipesByUserMenu,
+  getRecipesByUser,
+  getRecipeByUser,
+  deleteRecipeMenuItems
 } from "../models/usersModel";
 import { User } from "../types/users";
 import jwt from "jsonwebtoken";
 import { config } from "../utils/config";
-import { getRecipesByUser } from "../models/recipesModel";
-import { Menu } from "../types/menus";
+import { Menu } from "../types/menu";
 import { Recipe } from "../types/recipes";
 import { Ingredient } from "../types/ingredient";
 /**
@@ -41,7 +43,7 @@ export const addUser = async (req: Request, res: Response) => {
     };
 
     // Save the user to the database
-    await addUserToDB(newUser);
+    await addToDB(newUser);
 
     // Generate an access token for the user
     const accessToken = jwt.sign(
@@ -52,7 +54,7 @@ export const addUser = async (req: Request, res: Response) => {
 
     // Generate a refresh token for the user
     const refreshToken = jwt.sign(
-      { userId: email },
+      { email: email },
       config.jwtSecret,
       {
         expiresIn: rememberMe
@@ -100,6 +102,29 @@ export const getRecipes = async (req: Request, res: Response) => {
   }
 };
 
+// Fetch menus including the recipe for the user
+export const getRecipeMenus = async (req: Request, res: Response) => {
+  console.log("getRecipeMenus");
+  const userEmail = req.user?.email;
+  if (!userEmail) {
+    res.status(401).json({ message: "Unauthorized: User not authenticated" });
+    return;
+  }
+  try {
+    const recipeMenus = await getRecipeMenusByUser(userEmail);
+
+    const recipeMenusObject = Object.fromEntries(recipeMenus);
+    res.status(200).json({
+      message: "RecipeMenus fetched successfully",
+      data: recipeMenusObject,
+    });
+  } catch (error) {
+    console.error("Error fetching RecipeMenus:", error);
+    res.status(500).json({ message: "Failed to fetch RecipeMenus" });
+  }
+};
+
+
 // Fetch menus for the user
 export const getMenus = async (req: Request, res: Response) => {
   const userEmail = req.user?.email;
@@ -137,7 +162,7 @@ export const addMenu = async (req: Request, res: Response): Promise<void> => {
     };
 
     // Save the user to the database
-    await addMenuToDB(newMenu);
+    await addToDB(newMenu);
 
     res.status(201).json({ message: "Menu added successfully" });
   } catch (error) {
@@ -204,12 +229,13 @@ export const addRecipe = async (req: Request, res: Response): Promise<void> => {
       }
       return step;
     });
-
+ 
     // Create a new recipe object
     const newRecipe: Recipe = {
       PK: `user#${userEmail}`,
-      SK: `recipe#${name}`,
+      SK: `recipe#${cover.split(".")[0]}`,
       GSI1PK: "recipe",
+      GSI1SK: `user#${userEmail}`,
       name: name,
       description: description,
       ingredients: parsedIngredients,
@@ -218,7 +244,7 @@ export const addRecipe = async (req: Request, res: Response): Promise<void> => {
     };
 
     // Save the recipe to the database
-    await addRecipeToDB(newRecipe);
+    await addToDB(newRecipe);
 
     res.status(201).json({ message: "Recipe added successfully" });
   } catch (error) {
@@ -228,5 +254,86 @@ export const addRecipe = async (req: Request, res: Response): Promise<void> => {
     } else {
       res.status(500).json({ message: "Failed to add recipe" });
     }
+  }
+};
+
+export const getMenuRecipes = async (req: Request, res: Response) => {
+  console.log("getMenuRecipes");
+  const userEmail = req.user?.email;
+  const { menuId } = req.params;
+  if (!userEmail) {
+      res.status(401).json({ message: "Unauthorized: User not authenticated" });
+      return;
+    }
+  try {
+    const menus = await getRecipesByUserMenu(userEmail, menuId);
+    res.status(200).json({ 
+      message: 'Menus fetched successfully', 
+      data: menus });
+  } catch (error) {
+    console.error('Error fetching menus:', error);
+    res.status(500).json({ message: 'Failed to fetch menus' });
+  }
+};
+
+
+// Add a new menu
+export const addRecipeMenu = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userEmail = req.user?.email;
+    if (!userEmail) {
+      res.status(401).json({ message: "Unauthorized: User not authenticated" });
+      return;
+    }
+    const { menuName } = req.params;
+    const { recipeId } = req.params;
+
+    // Get recipe details
+    const item = await getRecipeByUser(userEmail, recipeId);
+    const recipe = item as Recipe;
+
+    // Create a new recipe object
+    const newRecipeMenu: Recipe = {
+      PK: `user#${userEmail}1menu#${menuName}`,
+      SK: recipeId,
+      cover: recipe.cover,
+      description: recipe.description,
+      GSI1PK: recipeId,
+      GSI1SK: `user#${userEmail}1menu#${menuName}`,
+      ingredients: recipe.ingredients,
+      methods: recipe.methods,
+      name: recipe.name
+    };
+
+    // Save the user to the database
+    await addToDB(newRecipeMenu);
+
+    res.status(201).json({ message: "RecipeMenu added successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to add RecipeMenu" });
+  }
+};
+
+// Delete a menu
+export const deleteRecipeMenu = async (req: Request, res: Response) => {
+  const userEmail = req.user?.email;
+  if (!userEmail) {
+    res.status(401).json({ message: "Unauthorized: User not authenticated" });
+    return;
+  }
+  const { menuName } = req.params;
+  const { recipeId } = req.params;
+
+  try {
+    const isDeleted = await deleteRecipeMenuItems(menuName, recipeId);
+
+    if (isDeleted) {
+      res.status(200).json({ message: "RecipeMenu deleted successfully" });
+    } else {
+      res.status(500).json({ message: "Failed to delete RecipeMenu" });
+    }
+  } catch (error) {
+    console.error("Error deleting RecipeMenu:", error);
+    res.status(500).json({ message: "Failed to delete RecipeMenu" });
   }
 };

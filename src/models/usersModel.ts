@@ -8,14 +8,15 @@ import {
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { config } from "../utils/config";
-import { Menu } from "../types/menus";
+import { Menu } from "../types/menu";
 import { Recipe } from "../types/recipes";
+import { enrichRecipesWithS3Urls } from "./s3Model";
 
 // Function to add a user
-export const addUserToDB = async (user: User): Promise<void> => {
+export const addToDB = async (item: any): Promise<void> => {
   const params = {
     TableName: config.table,
-    Item: user,
+    Item: item,
   };
 
   const command = new PutCommand(params);
@@ -83,7 +84,7 @@ const deleteItems = async (items: any[]): Promise<void> => {
   }
 };
 
-const queryItemsForDeletion = async (
+const queryUserMenusForDeletion = async (
   userEmail: string,
   menuName: string
 ): Promise<any[]> => {
@@ -144,7 +145,7 @@ export const deleteMenuAndRelatedItems = async (
 ): Promise<boolean> => {
   try {
     // Step 1: Query all items with PK or SK equal to the menu ID
-    const itemsToDelete = await queryItemsForDeletion(userEmail, menuName);
+    const itemsToDelete = await queryUserMenusForDeletion(userEmail, menuName);
 
     if (itemsToDelete.length === 0) {
       console.log("No items found for deletion.");
@@ -162,23 +163,144 @@ export const deleteMenuAndRelatedItems = async (
   }
 };
 
-export const addMenuToDB = async (menu: Menu): Promise<void> => {
+
+// Fetch all recipes for a user
+export const getRecipesByUser = async (
+  userEmail: string
+): Promise<Recipe[]> => {
   const params = {
     TableName: config.table,
-    Item: menu,
+    KeyConditionExpression: "PK = :pk AND begins_with(SK, :recipePrefix)",
+    ExpressionAttributeValues: {
+      ":pk": `user#${userEmail}`, // Partition key format
+      ":recipePrefix": "recipe#", // Filter by recipes
+    },
   };
 
-  const command = new PutCommand(params);
-  await dynamoDB.send(command);
+  const command = new QueryCommand(params);
+  const result = await dynamoDB.send(command);
+
+  // Map the DynamoDB response to the `Recipe` type
+  const recipes = (result.Items as Recipe[]) || [];
+  return await enrichRecipesWithS3Urls(recipes);
 };
 
-export const addRecipeToDB = async (recipe: Recipe): Promise<void> => {
+// fetch recipes for a user's specific menu.
+export const getRecipesByUserMenu = async (
+  userEmail: string,
+  menuId: string
+): Promise<Recipe[]> => {
   const params = {
     TableName: config.table,
-    Item: recipe,
+    KeyConditionExpression: "PK = :pk",
+    ExpressionAttributeValues: {
+      ":pk": `user#${userEmail}1${menuId}`, // Partition key
+    },
   };
 
-  const command = new PutCommand(params);
-  await dynamoDB.send(command);
+  const command = new QueryCommand(params);
+  const result = await dynamoDB.send(command);
+
+  // Map the DynamoDB response to the `Recipe` type
+  const recipes = (result.Items as Recipe[]) || [];
+  return await enrichRecipesWithS3Urls(recipes);
 };
 
+// Fetch all recipes for a user
+export const getRecipeMenusByUser = async (
+  userEmail: string
+): Promise<Map<string, string[]>> => {
+  const result = new Map<string, string[]>();
+
+  // Get all recipes created by the userEmail
+  const paramsRecipe = {
+    TableName: config.table,
+    KeyConditionExpression: "PK = :pk AND begins_with(SK, :recipePrefix)",
+    ExpressionAttributeValues: {
+      ":pk": `user#${userEmail}`, // Partition key format
+      ":recipePrefix": "recipe#", // Filter by recipes
+    },
+  };
+
+  const commandRecipe = new QueryCommand(paramsRecipe);
+  const resultRecipe = await dynamoDB.send(commandRecipe);
+
+  const recipes = resultRecipe.Items as Recipe[];
+
+  // For each recipe, get the menus including the recipe
+  for (const recipe of recipes) {
+    const recipeId = recipe.SK;
+    // Get menus including the recipe
+    const paramsMenu = {
+      TableName: config.table,
+      IndexName: "GSI1PK-GSI1SK-index",
+      KeyConditionExpression: "GSI1PK = :recipe AND begins_with(GSI1SK, :userPrefix)",
+      ExpressionAttributeValues: {
+        ":recipe": recipeId,
+        ":userPrefix": `user#${userEmail}1menu#`,
+      },
+    };
+
+    const commandMenu = new QueryCommand(paramsMenu);
+    const resultMenu = await dynamoDB.send(commandMenu);
+    const menuRecipes = resultMenu.Items as Recipe[];
+
+    for (const menuRecipe of menuRecipes) {
+      const menuName = menuRecipe.PK.replace(`user#${userEmail}1menu#`, "");
+      // Update the Map safely
+      if (!result.has(recipeId)) {
+        result.set(recipeId, [menuName]);
+      } else {
+        result.get(recipeId)?.push(menuName);
+      }
+    }
+  }
+  return result;
+};
+
+
+// Fetch a recipe for a user
+export const getRecipeByUser = async (
+  userEmail: string,
+  recipeId: string
+): Promise<any> => {
+  const params = {
+    TableName: config.table, // Table name from config
+    Key: {
+      PK: `user#${userEmail}`,
+      SK: recipeId,
+    },
+  };
+
+  const command = new GetCommand(params);
+  const result = await dynamoDB.send(command);
+  return result.Item || null;;
+};
+
+// Fetch all recipes for a user
+export const deleteRecipeMenuItems = async (
+  userEmail: string,
+  recipeId: string
+): Promise<boolean> => {
+  try {
+    // Step 1: Query all items with PK or SK equal to the menu ID
+    const item = await getRecipeByUser(userEmail, recipeId);
+
+    const itemsToDelete = [item]
+
+    if (itemsToDelete.length === 0) {
+      console.log("No items found for deletion.");
+      return false;
+    }
+
+    // Step 2: Delete the queried items
+    await deleteItems(itemsToDelete);
+
+    console.log("Menu and related items deleted successfully.");
+    return true;
+  } catch (error) {
+    console.error("Error deleting menu and related items:", error);
+    return false;
+  }
+  
+};
