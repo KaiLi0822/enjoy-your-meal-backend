@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { config } from "../utils/config";
 import { getUserByEmail } from "../models/usersModel";
+import logger from "../utils/logger";
 
 export const logoutUser = (req: Request, res: Response) => {
     try {
@@ -15,7 +16,7 @@ export const logoutUser = (req: Request, res: Response) => {
   
       res.status(200).json({ message: "Logout successful" });
     } catch (error) {
-      console.error("Error during logout:", error);
+      logger.error(`Error during logout: ${error}`);
       res.status(500).json({ message: "Failed to log out" });
     }
   };
@@ -66,7 +67,7 @@ export const loginUser = async (req: Request, res: Response) => {
       data: accessToken,
     });
   } catch (error) {
-    console.error("Error during login:", error);
+    logger.error(`Error during login: ${error}`);
     res.status(500).json({ message: "Failed to log in" });
   }
 };
@@ -93,7 +94,7 @@ export const refreshAccessToken = (req: Request, res: Response) => {
 
     res.status(200).json({ message: "Refresh Successfully", data: newAccessToken });
   } catch (error) {
-    console.error("Invalid refresh token:", error);
+    logger.error(`Invalid refresh token: ${error}`);
     res.status(401).json({ message: "Invalid or expired refresh token" });
   }
 };

@@ -3,18 +3,22 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import app from "./app";
+import http from "http";
+import logger from "./utils/logger";
+import "./utils/secretsClient";
 
 // Load SSL Certificate and Key
-import fs from "fs";
-import path from "path";
-const options = {
-    key: fs.readFileSync(path.join(__dirname, '../certs', 'localhost.key')),
-    cert: fs.readFileSync(path.join(__dirname, '../certs', 'localhost.crt')),
-  };
+// import https from "https";
+// import fs from "fs";
+// import path from "path";
+// const options = {
+//     key: fs.readFileSync(path.join(__dirname, '../certs', 'localhost.key')),
+//     cert: fs.readFileSync(path.join(__dirname, '../certs', 'localhost.crt')),
+//   };
 
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT)|| 3000;
+const HOST = process.env.HOST || "127.0.0.1"; // Ensure external access
 
-import https from "https";
-https.createServer(options, app).listen(PORT, () => {
-  console.log(`Server is running on https://localhost:${PORT}`);
+http.createServer(app).listen(PORT, HOST, () => {
+  logger.info(`Server is running on http://${HOST}:${PORT}`);
 });

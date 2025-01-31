@@ -18,6 +18,7 @@ import { config } from "../utils/config";
 import { Menu } from "../types/menu";
 import { Recipe } from "../types/recipes";
 import { Ingredient } from "../types/ingredient";
+import logger from "../utils/logger";
 /**
  * Controller to add a new user.
  */
@@ -77,14 +78,13 @@ export const addUser = async (req: Request, res: Response) => {
       data: accessToken, // Send access token to the client
     });
   } catch (error) {
-    console.error("Error adding user:", error);
+    logger.error(`Error adding user: ${error}`);
     res.status(500).json({ message: "Failed to add user" });
   }
 };
 
 // Fetch menus for the user
 export const getRecipes = async (req: Request, res: Response) => {
-  console.log("getRecipes");
   const userEmail = req.user?.email;
   if (!userEmail) {
     res.status(401).json({ message: "Unauthorized: User not authenticated" });
@@ -97,14 +97,13 @@ export const getRecipes = async (req: Request, res: Response) => {
       data: recipes,
     });
   } catch (error) {
-    console.error("Error fetching recipes:", error);
+    logger.error(`Error fetching recipes: ${error}`);
     res.status(500).json({ message: "Failed to fetch recipes" });
   }
 };
 
 // Fetch menus including the recipe for the user
 export const getRecipeMenus = async (req: Request, res: Response) => {
-  console.log("getRecipeMenus");
   const userEmail = req.user?.email;
   if (!userEmail) {
     res.status(401).json({ message: "Unauthorized: User not authenticated" });
@@ -119,7 +118,7 @@ export const getRecipeMenus = async (req: Request, res: Response) => {
       data: recipeMenusObject,
     });
   } catch (error) {
-    console.error("Error fetching RecipeMenus:", error);
+    logger.error(`Error fetching RecipeMenus: ${error}`);
     res.status(500).json({ message: "Failed to fetch RecipeMenus" });
   }
 };
@@ -139,7 +138,7 @@ export const getMenus = async (req: Request, res: Response) => {
       data: menus,
     });
   } catch (error) {
-    console.error("Error fetching menus:", error);
+    logger.error(`Error fetching menus: ${error}`);
     res.status(500).json({ message: "Failed to fetch menus" });
   }
 };
@@ -188,14 +187,13 @@ export const deleteMenu = async (req: Request, res: Response) => {
       res.status(500).json({ message: "Failed to delete menu" });
     }
   } catch (error) {
-    console.error("Error deleting menu:", error);
+    logger.error(`Error deleting menu: ${error}`);
     res.status(500).json({ message: "Failed to delete menu" });
   }
 };
 
 
 export const addRecipe = async (req: Request, res: Response): Promise<void> => {
-  console.log("addRecipe")
   try {
     const userEmail = req.user?.email;
     if (!userEmail) {
@@ -248,7 +246,7 @@ export const addRecipe = async (req: Request, res: Response): Promise<void> => {
 
     res.status(201).json({ message: "Recipe added successfully" });
   } catch (error) {
-    console.error("Error adding recipe:", error);
+    logger.error(`Error adding recipe: ${error}`);
     if (error instanceof Error && error.message.includes("Invalid")) {
       res.status(400).json({ message: error.message });
     } else {
@@ -258,7 +256,6 @@ export const addRecipe = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const getMenuRecipes = async (req: Request, res: Response) => {
-  console.log("getMenuRecipes");
   const userEmail = req.user?.email;
   const { menuId } = req.params;
   if (!userEmail) {
@@ -271,7 +268,7 @@ export const getMenuRecipes = async (req: Request, res: Response) => {
       message: 'Menus fetched successfully', 
       data: menus });
   } catch (error) {
-    console.error('Error fetching menus:', error);
+    logger.error('Error fetching menus:', error);
     res.status(500).json({ message: 'Failed to fetch menus' });
   }
 };
@@ -333,7 +330,7 @@ export const deleteRecipeMenu = async (req: Request, res: Response) => {
       res.status(500).json({ message: "Failed to delete RecipeMenu" });
     }
   } catch (error) {
-    console.error("Error deleting RecipeMenu:", error);
+    logger.error(`Error deleting RecipeMenu: ${error}`);
     res.status(500).json({ message: "Failed to delete RecipeMenu" });
   }
 };

@@ -4,10 +4,10 @@ import { config } from "./config"; // Assume you have a config file for environm
 // Initialize the S3 client
 const s3Client = new S3Client({
   region: config.awsRegion,
-  credentials: {
-    accessKeyId: config.awsCredentials.accessKeyId,
-    secretAccessKey: config.awsCredentials.secretAccessKey,
-  },
+  // credentials: {
+  //   accessKeyId: config.awsCredentials.accessKeyId,
+  //   secretAccessKey: config.awsCredentials.secretAccessKey,
+  // },
 });
 
 export default s3Client;

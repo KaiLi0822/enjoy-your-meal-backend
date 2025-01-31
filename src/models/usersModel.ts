@@ -5,12 +5,12 @@ import {
   GetCommand,
   PutCommand,
   QueryCommand,
-  ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { config } from "../utils/config";
 import { Menu } from "../types/menu";
 import { Recipe } from "../types/recipes";
 import { enrichRecipesWithS3Urls } from "./s3Model";
+import logger from "../utils/logger";
 
 // Function to add a user
 export const addToDB = async (item: any): Promise<void> => {
@@ -41,7 +41,7 @@ export const getUserByEmail = async (email: string): Promise<User> => {
     const result = await dynamoDB.send(new GetCommand(params));
     return (result.Item as User) || null;
   } catch (error) {
-    console.error("Error fetching user by email:", error);
+    logger.error(`Error fetching user by email: ${error}`);
     throw new Error("Error fetching user by email");
   }
 };
@@ -77,9 +77,9 @@ const deleteItems = async (items: any[]): Promise<void> => {
       await dynamoDB.send(command);
     }
 
-    console.log("Items deleted successfully");
+    logger.info("Items deleted successfully");
   } catch (error) {
-    console.error("Error deleting items:", error);
+    logger.error(`Error deleting items: ${error}`);
     throw error;
   }
 };
@@ -115,7 +115,7 @@ const queryUserMenusForDeletion = async (
 
     return [...menuItem, ...recipeItems];
   } catch (error) {
-    console.error("Error querying items for deletion:", error);
+    logger.error(`Error querying items for deletion: ${error}`);
     throw error;
   }
 };
@@ -148,21 +148,20 @@ export const deleteMenuAndRelatedItems = async (
     const itemsToDelete = await queryUserMenusForDeletion(userEmail, menuName);
 
     if (itemsToDelete.length === 0) {
-      console.log("No items found for deletion.");
+      logger.info("No items found for deletion.");
       return false;
     }
 
     // Step 2: Delete the queried items
     await deleteItems(itemsToDelete);
 
-    console.log("Menu and related items deleted successfully.");
+    logger.info("Menu and related items deleted successfully.");
     return true;
   } catch (error) {
-    console.error("Error deleting menu and related items:", error);
+    logger.error(`Error deleting menu and related items: ${error}`);
     return false;
   }
 };
-
 
 // Fetch all recipes for a user
 export const getRecipesByUser = async (
@@ -234,7 +233,8 @@ export const getRecipeMenusByUser = async (
     const paramsMenu = {
       TableName: config.table,
       IndexName: "GSI1PK-GSI1SK-index",
-      KeyConditionExpression: "GSI1PK = :recipe AND begins_with(GSI1SK, :userPrefix)",
+      KeyConditionExpression:
+        "GSI1PK = :recipe AND begins_with(GSI1SK, :userPrefix)",
       ExpressionAttributeValues: {
         ":recipe": recipeId,
         ":userPrefix": `user#${userEmail}1menu#`,
@@ -258,7 +258,6 @@ export const getRecipeMenusByUser = async (
   return result;
 };
 
-
 // Fetch a recipe for a user
 export const getRecipeByUser = async (
   userEmail: string,
@@ -274,7 +273,7 @@ export const getRecipeByUser = async (
 
   const command = new GetCommand(params);
   const result = await dynamoDB.send(command);
-  return result.Item || null;;
+  return result.Item || null;
 };
 
 // Fetch all recipes for a user
@@ -286,21 +285,20 @@ export const deleteRecipeMenuItems = async (
     // Step 1: Query all items with PK or SK equal to the menu ID
     const item = await getRecipeByUser(userEmail, recipeId);
 
-    const itemsToDelete = [item]
+    const itemsToDelete = [item];
 
     if (itemsToDelete.length === 0) {
-      console.log("No items found for deletion.");
+      logger.info("No items found for deletion.");
       return false;
     }
 
     // Step 2: Delete the queried items
     await deleteItems(itemsToDelete);
 
-    console.log("Menu and related items deleted successfully.");
+    logger.info("Menu and related items deleted successfully.");
     return true;
   } catch (error) {
-    console.error("Error deleting menu and related items:", error);
+    logger.error(`Error deleting menu and related items: ${error}`);
     return false;
   }
-  
 };

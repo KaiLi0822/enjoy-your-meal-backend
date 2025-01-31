@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { fetchAllRecipes } from "../models/recipesModel";
+import logger from "../utils/logger";
 
 /**
  * Controller to handle the GET request for fetching all recipes.
@@ -12,7 +13,7 @@ export const getAllRecipes = async (req: Request, res: Response) => {
       data: recipes,
     });
   } catch (error) {
-    console.error("Error in getRecipes controller:", error);
+    logger.error(`Error in getRecipes controller: ${error}`);
     res.status(500).json({ message: "Failed to fetch recipes" });
   }
 };

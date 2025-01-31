@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { config } from "../utils/config";
+import logger from "../utils/logger";
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
 
@@ -25,7 +26,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     // If the token structure is invalid
     res.status(401).json({ message: "Invalid token payload" });
   } catch (error) {
-    console.error("Error verifying token:", error);
+    logger.error(`Error verifying token: ${error}`);
     res.status(401).json({ message: "Invalid or expired token" });
   }
 };

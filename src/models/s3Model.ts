@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import s3Client from "../utils/s3Client";
 import { config } from "../utils/config";
 import { Recipe } from "../types/recipes";
+import logger from "../utils/logger";
 
 /**
  * Replace the `cover` property with a readable S3 URL for all recipes.
@@ -15,7 +16,7 @@ export const enrichRecipesWithS3Urls = async (recipes: Recipe[]): Promise<Recipe
         try {
           recipe.cover = await generateS3ReadableUrl(recipe.cover);
         } catch (error) {
-          console.error(
+          logger.error(
             `Failed to generate S3 URL for recipe ${recipe.name}:`,
             error
           );
@@ -40,7 +41,7 @@ export const generateS3ReadableUrl = async (key: string): Promise<string> => {
     // Generate a signed URL (valid for 1 hour)
     return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
   } catch (error) {
-    console.error("Error generating S3 URL:", error);
+    logger.error(`Error generating S3 URL: ${error}`);
     throw new Error("Failed to generate S3 URL");
   }
 };
@@ -73,7 +74,7 @@ export const uploadFileToS3 = async (
 
     return uniqueFileName;
   } catch (error) {
-    console.error("Error uploading to S3:", error);
+    logger.error(`Error uploading to S3: ${error}`);
     throw new Error("Failed to upload file");
   }
 };

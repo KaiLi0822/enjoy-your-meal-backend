@@ -3,6 +3,7 @@ import dynamoDB from "../utils/dynamoClient";
 import { Recipe } from "../types/recipes";
 import { config } from "../utils/config"; // Import the config object
 import { enrichRecipesWithS3Urls } from "./s3Model";
+import logger from "../utils/logger";
 
 
 /**
@@ -10,7 +11,7 @@ import { enrichRecipesWithS3Urls } from "./s3Model";
  */
 export const fetchAllRecipes = async (): Promise<Recipe[]> => {
   try {
-    console.log("fetchAllRecipes")
+    logger.info("fetchAllRecipes")
     const params = {
       TableName: config.table,
       IndexName: "GSI1PK-GSI1SK-index",
@@ -26,7 +27,7 @@ export const fetchAllRecipes = async (): Promise<Recipe[]> => {
     const recipes = (result.Items as Recipe[]) || [];
     return await enrichRecipesWithS3Urls(recipes);
   } catch (error) {
-    console.error("Error fetching recipes from DynamoDB:", error);
+    logger.error(`Error fetching recipes from DynamoDB: ${error}`);
     throw new Error("Failed to fetch recipes");
   }
 };
