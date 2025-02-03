@@ -6,6 +6,7 @@ import app from "./app";
 import http from "http";
 import logger from "./utils/logger";
 import "./utils/secretsClient";
+import { loadJWTSecret } from "./utils/secretsClient";
 
 // Load SSL Certificate and Key
 // import https from "https";
@@ -19,6 +20,9 @@ import "./utils/secretsClient";
 const PORT = Number(process.env.PORT)|| 3000;
 const HOST = process.env.HOST || "127.0.0.1"; // Ensure external access
 
-http.createServer(app).listen(PORT, HOST, () => {
-  logger.info(`Server is running on http://${HOST}:${PORT}`);
+// Start server after loading secret
+loadJWTSecret().then(() => {
+  http.createServer(app).listen(PORT, HOST, () => {
+    logger.info(`Server is running on http://${HOST}:${PORT}`);
+  });
 });
