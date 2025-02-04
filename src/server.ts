@@ -21,8 +21,8 @@ const PORT = Number(process.env.PORT)|| 3000;
 const HOST = process.env.HOST || "127.0.0.1"; // Ensure external access
 
 // Start server after loading secret
-loadJWTSecret().then(() => {
+// loadJWTSecret().then(() => {
   http.createServer(app).listen(PORT, HOST, () => {
     logger.info(`Server is running on http://${HOST}:${PORT}`);
   });
-});
+// });
