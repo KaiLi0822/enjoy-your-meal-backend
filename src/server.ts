@@ -24,7 +24,6 @@ const HOST = process.env.HOST || "127.0.0.1"; // Ensure external access
 // Start server after loading secret
 loadJWTSecret().then(() => {
   http.createServer(app).listen(PORT, HOST, () => {
-    logger.info(config.jwtSecret);
     logger.info(`Server is running on http://${HOST}:${PORT}`);
   });
 });
