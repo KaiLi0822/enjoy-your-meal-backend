@@ -27,7 +27,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
   try {
     const user = await getUserByEmail(email);
-
+    logger.info(`config.jwtSecret ${config.jwtSecret}`)
     if (!user || !(await bcrypt.compare(password, user.password))) {
       res.status(401).json({ message: "Invalid email or password" });
       return;
