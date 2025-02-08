@@ -78,6 +78,6 @@ const accessToken = jwt.sign(
 
 
 ## 📬 Contact
-For any queries, feel free to reach out at *(18840864172@163.como)*.
+For any queries, feel free to reach out at *(18840864172@163.com)*.
 
 Enjoy sharing your favorite meals! 🍽️
